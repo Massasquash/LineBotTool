@@ -107,6 +107,89 @@ class LineClient{
   
   }
 
+  /**
+ * リプライを送る処理
+ * @param replyToken {string} - リプライトークン
+ * @param messages {object} - 送る内容に合わせたメッセージオブジェクト
+ * @return {object} - ステータスコード200と空のJSONオブジェクト
+ * 
+ * リプライ、テンプレートメッセージ、
+ * 
+ * <参考>
+ * - リプライメッセージ　https://developers.line.biz/ja/reference/messaging-api/#send-reply-message
+ * - メッセージオブジェクト https://developers.line.biz/ja/reference/messaging-api/#message-objects
+ */
+  replyMessages(replyToken, messages){
+
+    const header = Object.assign({'Content-Type': 'application/json'}, this.baseHeader);
+
+    const body = {
+        replyToken: replyToken,
+        messages: messages,
+        notificationDisabled: true
+    };
+
+    const options = {
+      method: "POST",
+      headers: header,
+      payload: JSON.stringify(body),
+      muteHttpExceptions: true
+    };
+
+    return UrlFetchApp.fetch(this.replyMessageUrl(), options);
+  
+  }
+
+
+  /**
+ * クイックリプライを送る処理
+ * 現在は「２つ」のみに対応
+ * @param replyToken {string} - リプライトークン
+ * @param msg {string} - テキスト内容
+ * @param postbackOption {object} - ポストバックアクション」のitems用のオブジェクト
+ * @return {object} - ステータスコード200と空のJSONオブジェクト
+ * 
+ * 例）postbackOption = [{label: 'はい', data: 'confirm_yes', displayText: 'はい'},
+ *                      {label: 'いいえ', data: 'confirm_no', displayText: 'いいえ'}]
+ * 
+ * <参考>
+ * - リプライメッセージ　https://developers.line.biz/ja/reference/messaging-api/#send-reply-message
+ * - メッセージオブジェクト https://developers.line.biz/ja/reference/messaging-api/#message-objects
+ */
+  quickReply(replyToken, msg, postbackOption) {
+
+    const items = [
+      {
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: postbackOption[0].label,
+          data: postbackOption[0].data,
+          displayText: postbackOption[0].displayText,
+        }
+      }, {
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: postbackOption[1].label,
+          data: postbackOption[1].data,
+          displayText: postbackOption[1].displayText,
+        }
+      }
+    ];
+
+    const messages = [{
+      type: 'text',
+      text: msg,
+      quickReply: {
+        items: items
+      }
+    }];
+
+    return this.replyMessages(replyToken, messages);
+
+  }
+
 }
 
 
